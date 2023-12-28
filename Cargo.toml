@@ -1,0 +1,18 @@
+[package]
+name = "the-genious-square-all-paths-explored"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+arrayvec = "0.7.4"
+bevy = "0.12.1"
+clap = { version = "4.4.11", features = ["derive"] }
+rand = "0.8.5"
+rayon = "1.8.0"
+
+[build-dependencies]
+proc-macro2 = "1.0.71"
+quote = "*"
+syn = "*"
