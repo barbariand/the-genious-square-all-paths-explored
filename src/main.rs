@@ -1,14 +1,25 @@
 #![feature(iter_array_chunks)]
 #![feature(test)]
+#![feature(iter_map_windows)]
 mod bitmap;
 
 mod app;
 mod generated_bitboards;
 use bitmap::BitMap64;
 use clap::Parser;
-use rayon::iter::IndexedParallelIterator;
+use dices::DICE1;
+use dices::DICE2;
+use dices::DICE3;
+use dices::DICE4;
+use dices::DICE5;
+use dices::DICE6;
+use dices::DICE7;
+use indicatif::ParallelProgressIterator;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use rayon::prelude::IntoParallelIterator;
+use rayon::prelude::ParallelBridge;
+use std::fmt::Debug;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -155,75 +166,112 @@ impl Args {
         }
     }
 }
+struct DiceCombinationIterator<'a> {
+    vecs: [&'a [(Row, Column)]; 7],
+    indices: [usize; 7],
+    done: bool,
+}
+
+impl<'a> DiceCombinationIterator<'a> {
+    fn new() -> Self {
+        DiceCombinationIterator {
+            indices: [0; 7],
+            vecs: [&DICE1, &DICE2, &DICE3, &DICE4, &DICE5, &DICE6, &DICE7],
+            done: false,
+        }
+    }
+}
+
+impl<'a> Iterator for DiceCombinationIterator<'a> {
+    type Item = Dices;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+
+        let result = [
+            self.vecs[0][self.indices[0]].clone(),
+            self.vecs[1][self.indices[1]].clone(),
+            self.vecs[2][self.indices[2]].clone(),
+            self.vecs[3][self.indices[3]].clone(),
+            self.vecs[4][self.indices[4]].clone(),
+            self.vecs[5][self.indices[5]].clone(),
+            self.vecs[6][self.indices[6]].clone(),
+        ];
+
+        // Increment the indices
+        for i in (0..7).rev() {
+            if self.indices[i] < self.vecs[i].len() - 1 {
+                self.indices[i] += 1;
+                break;
+            } else {
+                self.indices[i] = 0;
+                if i == 0 {
+                    self.done = true;
+                }
+            }
+        }
+
+        Some(Dices(result))
+    }
+}
+struct BoardIterator {
+    vec: [usize; 7],
+}
+
+impl BoardIterator {
+    fn new() -> Self {
+        BoardIterator {
+            vec: [0, 1, 2, 3, 4, 5, 6],
+        }
+    }
+}
+impl Iterator for BoardIterator {
+    type Item = Board;
+    fn next(&mut self) -> Option<Self::Item> {
+        // incrementing where possible
+        let moved = self.vec.iter_mut().rev().enumerate().find_map(|(i, v)| {
+            (*v < 35 - i).then(|| {
+                *v += 1;
+                i
+            })
+        })?;
+        // now we may have things that have reatched the end and we need to move them
+        for (i, revi) in (0..moved).into_iter().rev().enumerate() {
+            self.vec[6 - revi] = self.vec[6 - moved] + i + 1;
+        }
+        Some(Board::from_pos(&self.vec))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     extern crate test;
-    use crate::{Board, Column, Dices, Row};
+    use super::{Board, Column, Dices, Row};
 
     use super::dices::*;
     use test::Bencher;
-    struct CombinationsIterator<'a> {
-        vecs: [&'a [(Row, Column)]; 7],
-        indices: [usize; 7],
-        done: bool,
-    }
-
-    impl<'a> CombinationsIterator<'a> {
-        fn new(vecs: [&'a [(Row, Column)]; 7]) -> Self {
-            CombinationsIterator {
-                indices: [0; 7],
-                vecs,
-                done: false,
-            }
-        }
-    }
-
-    impl<'a> Iterator for CombinationsIterator<'a> {
-        type Item = Dices;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            if self.done {
-                return None;
-            }
-
-            let result = [
-                self.vecs[0][self.indices[0]].clone(),
-                self.vecs[1][self.indices[1]].clone(),
-                self.vecs[2][self.indices[2]].clone(),
-                self.vecs[3][self.indices[3]].clone(),
-                self.vecs[4][self.indices[4]].clone(),
-                self.vecs[5][self.indices[5]].clone(),
-                self.vecs[6][self.indices[6]].clone(),
-            ];
-
-            // Increment the indices
-            for i in (0..7).rev() {
-                if self.indices[i] < self.vecs[i].len() - 1 {
-                    self.indices[i] += 1;
-                    break;
-                } else {
-                    self.indices[i] = 0;
-                    if i == 0 {
-                        self.done = true;
-                    }
-                }
-            }
-
-            Some(Dices(result))
-        }
-    }
 
     #[bench]
     fn find_all_solutions_to_all_dice_rolls(b: &mut Bencher) {
         b.iter(|| {
-            for i in 0..10 {
-                Board::new(get_dices()).solve();
-            }
+            Board::new(get_dices()).solve();
         })
     }
 }
 fn main() {
-    let args = Args::parse();
+    use indicatif::ProgressIterator;
+    let iterator = BoardIterator::new();
+    let mut all_solutions: usize = iterator
+        .par_bridge()
+        .progress_count(8_347_680 / 16)
+        .map(|board| board.solve().len())
+        .sum(); // Process the board as needed
+
+    println!("all solutions:{}", all_solutions);
+
+    /* let args = Args::parse();
 
     let mut starter_board = BitMap64::new(0);
     for (r, c) in args.dieces.0 {
@@ -233,7 +281,7 @@ fn main() {
     let solutions = board.solve();
 
     println!("starterboard:\n{:?}\n{}", starter_board, solutions[0]);
-    println!("amount of solutions fund: {}", solutions.len())
+    println!("amount of solutions fund: {}", solutions.len()) */
 }
 #[derive(Debug, Clone, Copy)]
 struct Board {
@@ -241,6 +289,13 @@ struct Board {
 }
 
 impl Board {
+    fn from_pos(vec: &[usize; 7]) -> Self {
+        let mut starter_board = BitMap64::new(0);
+        for i in vec {
+            starter_board.set_bit((i / 6 * 8 + i % 6) as u64)
+        }
+        Self { starter_board }
+    }
     fn new(dices: Dices) -> Self {
         let mut starter_board = BitMap64::new(0);
         for (r, c) in dices.0 {
@@ -253,14 +308,14 @@ impl Board {
         let pre_candidates = possible
             .pop()
             .expect("it should allways have 9 in the thingymagig");
-        println!("allocating {}u64s", pre_candidates.len() * 10);
+        //println!("allocating {}u64s", pre_candidates.len() * 10);
         let mut candidates: Vec<_> = pre_candidates
             .into_iter()
             .map(|v| PieceBoard::new(v))
             .collect();
 
         for (i, piece_positions) in possible.iter().rev().enumerate() {
-            println!("being iteration: {}, candidates:{}", i, candidates.len());
+            //println!("being iteration: {}, candidates:{}", i, candidates.len());
             candidates = piece_positions
                 .par_iter()
                 .flat_map_iter(|v| candidates.iter().filter_map(|val| val.try_insert(v, i)))
@@ -303,6 +358,21 @@ impl PieceBoard {
         }
     }
 }
+impl Debug for PieceBoard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use pieces::Pieces::*;
+        for (i, piece) in [
+            OneByOne, OneByTwo, OneByThree, OneByFour, TwoByTwo, Shape6, Shape7, Shape8, Shape9,
+        ]
+        .iter()
+        .rev()
+        .enumerate()
+        {
+            writeln!(f, "{:?}:\n{:?}", piece, self.pieces[i])?;
+        }
+        Ok(())
+    }
+}
 impl Display for PieceBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use pieces::Pieces::*;
@@ -322,7 +392,6 @@ mod pieces {
 
     use crate::bitmap::BitMap64;
     use crate::generated_bitboards::*;
-    use arrayvec::ArrayVec;
     use rayon::iter::IntoParallelRefIterator;
     use rayon::iter::ParallelIterator;
     #[inline]
@@ -331,12 +400,12 @@ mod pieces {
             (0_usize, Pieces::OneByOne),
             (1, Pieces::OneByTwo),
             (2, Pieces::OneByThree),
-            (3, Pieces::OneByFour),
             (4, Pieces::TwoByTwo),
             (5, Pieces::Shape6),
             (6, Pieces::Shape7),
             (7, Pieces::Shape8),
             (8, Pieces::Shape9),
+            (3, Pieces::OneByFour),
         ]
         .par_iter()
         .map(|(index, piece)| {
