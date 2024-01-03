@@ -3,7 +3,6 @@
 #![feature(iter_map_windows)]
 mod bitmap;
 
-mod app;
 mod generated_bitboards;
 use bitmap::BitMap64;
 use clap::Parser;
@@ -237,10 +236,12 @@ impl Iterator for BoardIterator {
                 i
             })
         })?;
+
         // now we may have things that have reatched the end and we need to move them
         for (i, revi) in (0..moved).into_iter().rev().enumerate() {
-            self.vec[6 - revi] = self.vec[6 - moved] + i + 1;
+            self.vec[6 - revi] = self.vec[6 - moved] + (i + 1);
         }
+
         Some(Board::from_pos(&self.vec))
     }
 }
@@ -260,18 +261,34 @@ mod tests {
         })
     }
 }
+const invalid: BitMap64 = BitMap64::new(18446720803221662421);
 fn main() {
     use indicatif::ProgressIterator;
+    println!(
+        "{}",
+        BoardIterator::new()
+            .filter(|v| v.starter_board & invalid == BitMap64::new(0))
+            .count()
+    );
+    todo!();
     let iterator = BoardIterator::new();
+
     let mut all_solutions: usize = iterator
         .par_bridge()
-        .progress_count(8_347_680 / 16)
-        .map(|board| board.solve().len())
-        .sum(); // Process the board as needed
+        .filter(|v| v.starter_board & invalid == BitMap64::new(0))
+        .map(|board| {
+            let dieces = board.starter_board.clone();
+            let len = board.solve().len();
+            println!("dieces:{},solutions{}", dieces.get_copied_inner(), len);
+            len
+        })
+        .sum();
+    /*
+    // Process the board as needed
 
-    println!("all solutions:{}", all_solutions);
+    println!("all solutions:{:?}", all_solutions);
 
-    /* let args = Args::parse();
+    let args = Args::parse();
 
     let mut starter_board = BitMap64::new(0);
     for (r, c) in args.dieces.0 {
@@ -281,7 +298,9 @@ fn main() {
     let solutions = board.solve();
 
     println!("starterboard:\n{:?}\n{}", starter_board, solutions[0]);
-    println!("amount of solutions fund: {}", solutions.len()) */
+
+    println!("amount of solutions fund: {}", solutions.len());
+    std::fs::write("./solutions", format!("{:?}", solutions)).expect("cant write to file"); */
 }
 #[derive(Debug, Clone, Copy)]
 struct Board {
@@ -362,7 +381,7 @@ impl Debug for PieceBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use pieces::Pieces::*;
         for (i, piece) in [
-            OneByOne, OneByTwo, OneByThree, OneByFour, TwoByTwo, Shape6, Shape7, Shape8, Shape9,
+            OneByOne, OneByTwo, OneByThree, TwoByTwo, Shape6, Shape7, Shape8, Shape9, OneByFour,
         ]
         .iter()
         .rev()
@@ -377,7 +396,7 @@ impl Display for PieceBoard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use pieces::Pieces::*;
         for (i, piece) in [
-            OneByOne, OneByTwo, OneByThree, OneByFour, TwoByTwo, Shape6, Shape7, Shape8, Shape9,
+            OneByOne, OneByTwo, OneByThree, TwoByTwo, Shape6, Shape7, Shape8, Shape9, OneByFour,
         ]
         .iter()
         .rev()

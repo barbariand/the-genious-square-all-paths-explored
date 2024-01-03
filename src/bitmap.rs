@@ -35,6 +35,7 @@ impl BitMap64 {
 }
 impl Debug for BitMap64 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "");
         for i in 0..6 {
             for j in 0..6 {
                 if self.get_bit(i * 8 + j) {

@@ -1,17 +1,23 @@
 use core::num;
 
 fn main() {
-    let text = include_str!("../log.txt");
+    let text = include_str!("../test.txt");
     let number = text
         .split("\n")
         .enumerate()
         .fold((0, 0), |(j, prev), (i, str)| {
             let iter = str.split_whitespace();
-            let num = iter.last().unwrap().parse::<usize>().unwrap();
+            let last = iter.last().unwrap();
+            let num = last
+                .parse::<usize>()
+                .expect(&format!("found invalid {}", last));
             if prev < num {
                 return (i + 1, num);
             };
             (j, prev)
         });
-    println!("least is at line {}, with {} solutions", number.0, number.1)
+    println!(
+        "biggest is at line {}, with {} solutions",
+        number.0, number.1
+    )
 }
