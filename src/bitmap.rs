@@ -1,13 +1,23 @@
-use std::{
-    fmt::{Debug, Display},
-    ops::*,
+use core::{
+    fmt::Debug,
+    ops::{
+        BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shl, ShlAssign, Shr,
+        ShrAssign,
+    },
 };
+use std::ops::Deref;
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub struct BitMap64(u64);
+impl Deref for BitMap64 {
+    type Target = u64;
 
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 impl BitMap64 {
-    pub const fn new(num: u64) -> BitMap64 {
-        BitMap64(num)
+    pub const fn new(num: u64) -> Self {
+        Self(num)
     }
     pub fn set_bit(&mut self, bit: u64) {
         self.0 |= 1 << bit;
@@ -29,13 +39,14 @@ impl BitMap64 {
     pub fn count_ones(&self) -> u8 {
         self.0.count_ones() as u8
     }
+    #[inline(always)]
     pub fn get_copied_inner(&self) -> u64 {
         self.0
     }
 }
 impl Debug for BitMap64 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "");
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        writeln!(f)?;
         for i in 0..6 {
             for j in 0..6 {
                 if self.get_bit(i * 8 + j) {
@@ -44,7 +55,7 @@ impl Debug for BitMap64 {
                     write!(f, "0")?;
                 }
             }
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -52,90 +63,90 @@ impl Debug for BitMap64 {
 impl Shr<u64> for BitMap64 {
     type Output = Self;
     fn shr(self, rhs: u64) -> Self::Output {
-        BitMap64(self.0 >> rhs)
+        Self(self.0 >> rhs)
     }
 }
 impl ShrAssign<u64> for BitMap64 {
     fn shr_assign(&mut self, rhs: u64) {
-        self.0 = self.0 >> rhs
+        self.0 = self.0 >> rhs;
     }
 }
 impl ShlAssign<u64> for BitMap64 {
     fn shl_assign(&mut self, rhs: u64) {
-        self.0 = self.0 << rhs
+        self.0 = self.0 << rhs;
     }
 }
 impl Shl<u64> for BitMap64 {
     type Output = Self;
     fn shl(self, rhs: u64) -> Self::Output {
-        BitMap64(self.0 << rhs)
+        Self(self.0 << rhs)
     }
 }
 impl BitAnd for BitMap64 {
     type Output = Self;
     fn bitand(self, rhs: Self) -> Self::Output {
-        BitMap64(self.0 & rhs.0)
+        Self(self.0 & rhs.0)
     }
 }
 impl BitAndAssign for BitMap64 {
     fn bitand_assign(&mut self, rhs: Self) {
-        self.0 = self.0 & rhs.0
+        self.0 = self.0 & rhs.0;
     }
 }
 impl BitOr for BitMap64 {
     type Output = Self;
     fn bitor(self, rhs: Self) -> Self::Output {
-        BitMap64(self.0 | rhs.0)
+        Self(self.0 | rhs.0)
     }
 }
 impl BitOrAssign for BitMap64 {
     fn bitor_assign(&mut self, rhs: Self) {
-        self.0 = self.0 | rhs.0
+        self.0 = self.0 | rhs.0;
     }
 }
 impl BitXor for BitMap64 {
     type Output = Self;
     fn bitxor(self, rhs: Self) -> Self::Output {
-        BitMap64(self.0 ^ rhs.0)
+        Self(self.0 ^ rhs.0)
     }
 }
 impl BitXorAssign for BitMap64 {
     fn bitxor_assign(&mut self, rhs: Self) {
-        self.0 = self.0 ^ rhs.0
+        self.0 = self.0 ^ rhs.0;
     }
 }
 
 impl BitAnd<u64> for BitMap64 {
     type Output = Self;
     fn bitand(self, rhs: u64) -> Self::Output {
-        BitMap64(self.0 & rhs)
+        Self(self.0 & rhs)
     }
 }
 impl BitAndAssign<u64> for BitMap64 {
     fn bitand_assign(&mut self, rhs: u64) {
-        self.0 = self.0 & rhs
+        self.0 = self.0 & rhs;
     }
 }
 impl BitOr<u64> for BitMap64 {
     type Output = Self;
     fn bitor(self, rhs: u64) -> Self::Output {
-        BitMap64(self.0 | rhs)
+        Self(self.0 | rhs)
     }
 }
 impl BitOrAssign<u64> for BitMap64 {
     fn bitor_assign(&mut self, rhs: u64) {
-        self.0 = self.0 | rhs
+        self.0 = self.0 | rhs;
     }
 }
 impl BitXor<u64> for BitMap64 {
     type Output = Self;
     fn bitxor(self, rhs: u64) -> Self::Output {
-        BitMap64(self.0 ^ rhs)
+        Self(self.0 ^ rhs)
     }
 }
 impl BitXorAssign<u64> for BitMap64 {
     fn bitxor_assign(&mut self, rhs: u64) {
-        self.0 = self.0 ^ rhs
+        self.0 = self.0 ^ rhs;
     }
 }
 

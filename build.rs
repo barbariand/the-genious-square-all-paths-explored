@@ -1,17 +1,16 @@
 use proc_macro2::*;
-use quote::{quote, ToTokens, TokenStreamExt};
-use std::env;
+use quote::{quote, ToTokens};
+
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use syn;
 
 // Assuming BitMap64 and Piece are defined elsewhere
 // Define functions to calculate bitboards...
 fn main() {
     let out_dir = "src/".to_string();
     let dest_path = Path::new(&out_dir).join("generated_bitboards.rs");
-    let mut file = File::create(&dest_path).unwrap();
+    let mut file = File::create(dest_path).unwrap();
 
     let mut tokens = TokenStream::new();
     tokens.extend(quote!(
@@ -29,45 +28,32 @@ fn main() {
         Piece::Shape8,
         Piece::Shape9,
     ] {
-        let piece_name = Ident::new(&format!("{:?}", piece), Span::call_site());
+        let piece_name = Ident::new(&(format!("{:?}", piece).to_uppercase()), Span::call_site());
 
         let rotations = piece.rotations();
         let mut all_rotations_tokens = Vec::new();
-        let mut num_positions = Vec::new();
 
         for rotation in rotations {
-            let mut rotation_bitboards = Vec::new();
-
             for x in 0..6 {
                 for y in 0..6 {
                     if let Some(bitboard) = generate_bitboard_for_piece(&rotation, (x, y)) {
                         let num = bitboard.0;
-                        rotation_bitboards.push(quote! { BitMap64::new(#num)});
+                        all_rotations_tokens.push(quote! { BitMap64::new(#num)});
                     }
                 }
             }
+        }
 
-            num_positions.push(rotation_bitboards.len());
-            all_rotations_tokens.push(quote! {
-                [#(#rotation_bitboards),*]
-            });
-        }
-        let num = num_positions[0];
         println!("\n\n shape:{:?}", piece);
-        for i in all_rotations_tokens.clone() {
-            //println!("{}\n\n", i);
-        }
-        println!("{:?}", num_positions);
-        assert!(num_positions.iter().find(|v| **v != num).is_none());
         let len = all_rotations_tokens.len();
 
         tokens.extend(quote! {
-            pub const #piece_name: [[BitMap64; #num]; #len] = [#(#all_rotations_tokens),*];
+            pub const #piece_name: [BitMap64; #len] = [#(#all_rotations_tokens),*];
         });
     }
 
     println!("cargo:rerun-if-changed=build.rs");
-    writeln!(file, "{}", tokens.to_string()).unwrap();
+    writeln!(file, "{}", tokens).unwrap();
 }
 fn generate_bitboard_for_piece(
     rotation: &[(isize, isize)],
@@ -79,7 +65,7 @@ fn generate_bitboard_for_piece(
         let (new_x, new_y) = (position.0 as isize + dx, position.1 as isize + dy);
 
         // Check if the new position is outside the 6x6 area
-        if new_x < 0 || new_x >= 6 || new_y < 0 || new_y >= 6 {
+        if !(0..6).contains(&new_x) || !(0..6).contains(&new_y) {
             return None;
         }
 
