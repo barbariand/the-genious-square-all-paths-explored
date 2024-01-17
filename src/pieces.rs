@@ -48,6 +48,7 @@ mod test {
         b.iter(|| black_box(get_possible(BitMap64::new(0))))
     }
     #[inline]
+    #[allow(dead_code)]
     pub fn get_possible_new(bitmap: BitMap64) -> Vec<Vec<&'static BitMap64>> {
         [
             (0_usize, Pieces::OneByOne),
