@@ -8,7 +8,7 @@ use std::path::Path;
 // Assuming BitMap64 and Piece are defined elsewhere
 // Define functions to calculate bitboards...
 fn main() {
-    let out_dir = "src/".to_string();
+    let out_dir = std::env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("generated_bitboards.rs");
     let mut file = File::create(dest_path).unwrap();
 

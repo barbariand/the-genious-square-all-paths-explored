@@ -49,11 +49,14 @@ impl Debug for BitMap64 {
         writeln!(f)?;
         for i in 0..6 {
             for j in 0..6 {
-                if self.get_bit(i * 8 + j) {
-                    write!(f, "1")?;
-                } else {
-                    write!(f, "0")?;
-                }
+                write!(
+                    f,
+                    "{}",
+                    match self.get_bit(i * 8 + j) {
+                        true => "1",
+                        false => "0",
+                    }
+                )?;
             }
             writeln!(f)?;
         }
