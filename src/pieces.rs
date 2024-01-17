@@ -99,7 +99,7 @@ mod test {
             (SHAPE9.as_ref()),
             (ONEBYFOUR.as_ref()),
         ]
-        .into_par_iter()
+        .into_iter()
         .map(|arr| {
             arr.into_iter()
                 .filter(|v| (*v & &bitmap) == bitmap::ZERO)
