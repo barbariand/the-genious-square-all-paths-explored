@@ -27,11 +27,8 @@ impl Board {
     pub fn solve(self) -> Vec<PieceBoard> {
         use std::simd::*;
         // we get the possible pieces here that are not in the starterboard
-        let mut possible: Vec<Vec<&BitMap64>> = crate::pieces::get_possible(self.starter_board);
-        //we start by using the first one beacuse it is garanted to not be in the bitbaord
-        let pre_candidates: Vec<&BitMap64> = possible
-            .pop()
-            .expect("it should allways have 9 vecs in the thingy");
+        let (possible, pre_candidates) = crate::pieces::get_possible(self.starter_board);
+
         //make them to pieceboards holadin all pieces
         let candidates: Vec<_> = pre_candidates
             .into_par_iter()
@@ -55,14 +52,17 @@ impl Board {
                                 .map(|v| v.total.get_copied_inner())
                                 .collect::<Vec<_>>();
                             let arr = u64x64::from_slice(&(*vec));
-                            let anded = (arr & compare).to_array();
-                            let ored = (arr | compare).to_array();
-                            anded.into_iter().zip(ored.into_iter()).zip(val).filter_map(
-                                move |((comp, new), val)| {
+                            let anded = (arr & compare);
+                            let ored = (arr | compare);
+                            anded
+                                .to_array()
+                                .into_iter()
+                                .zip(ored.to_array().into_iter())
+                                .zip(val)
+                                .filter_map(move |((comp, new), val)| {
                                     (comp == 0)
                                         .then(|| val.insert(v.clone(), BitMap64::new(new), i))
-                                },
-                            )
+                                })
                         })
                         .chain(rem.iter().filter_map(|val| val.try_insert(v, i)))
                     })
@@ -84,7 +84,7 @@ mod tests {
             Board::new(get_dices()).solve();
         })
     }
-    /* #[bench]
+    #[bench]
     fn finding_solution_to_bigest_board(b: &mut Bencher) {
         use crate::dices::{
             Column::{Five, Four, One, Six, Tree, Two},
@@ -103,5 +103,5 @@ mod tests {
             ]))
             .solve();
         })
-    } */
+    }
 }
