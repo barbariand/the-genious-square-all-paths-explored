@@ -63,6 +63,7 @@ fn main() {
     for (r, c) in args.dieces.0 {
         starter_board.set_bit(r as u64 * 8 + c as u64);
     }
+
     let board = Board::new(args.dieces);
     let solutions = board.solve();
 
@@ -74,6 +75,6 @@ fn main() {
             .map_or_else(|| "None".to_owned(), ToString::to_string)
     );
 
-    println!("amount of solutions fund: {}", solutions.len());
+    println!("amount of solutions found: {}", solutions.len());
     std::fs::write("./solutions", format!("{solutions:?}")).expect("cant write to file");
 }

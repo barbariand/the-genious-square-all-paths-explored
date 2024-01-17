@@ -6,8 +6,9 @@ use core::{
     },
 };
 use std::ops::Deref;
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, PartialEq, Eq, Default)]
 pub struct BitMap64(u64);
+pub static ZERO: BitMap64 = BitMap64(0);
 impl Deref for BitMap64 {
     type Target = u64;
 
@@ -91,6 +92,12 @@ impl BitAnd for BitMap64 {
         Self(self.0 & rhs.0)
     }
 }
+impl BitAnd for &BitMap64 {
+    type Output = BitMap64;
+    fn bitand(self, rhs: Self) -> Self::Output {
+        BitMap64(self.0 & rhs.0)
+    }
+}
 impl BitAndAssign for BitMap64 {
     fn bitand_assign(&mut self, rhs: Self) {
         self.0 = self.0 & rhs.0;
@@ -100,6 +107,12 @@ impl BitOr for BitMap64 {
     type Output = Self;
     fn bitor(self, rhs: Self) -> Self::Output {
         Self(self.0 | rhs.0)
+    }
+}
+impl BitOr for &BitMap64 {
+    type Output = BitMap64;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        BitMap64(self.0 | rhs.0)
     }
 }
 impl BitOrAssign for BitMap64 {
@@ -160,7 +173,7 @@ impl IntoIterator for &BitMap64 {
 
     fn into_iter(self) -> Self::IntoIter {
         BitMap64Iterator {
-            bitmap: *self, //copy semantics, it is safe to just move it here
+            bitmap: self.clone(), //copy semantics, it is safe to just move it here
             current: 0,
         }
     }

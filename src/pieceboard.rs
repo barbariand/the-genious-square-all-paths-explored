@@ -1,4 +1,3 @@
-
 use crate::bitmap::BitMap64;
 use std::fmt::Debug;
 use std::fmt::Display;
@@ -8,23 +7,24 @@ pub struct PieceBoard {
 }
 impl PieceBoard {
     pub fn try_insert(&self, new: &BitMap64, i: usize) -> Option<Self> {
-        (self.total & *new == BitMap64::new(0)).then(|| {
-            let mut pieces = self.pieces;
-            pieces[i + 1] = *new;
+        (&self.total & new == BitMap64::new(0)).then(|| {
+            let mut pieces = self.pieces.clone();
+            pieces[i + 1] = new.clone();
             Self {
-                total: self.total | *new,
+                total: &self.total | new,
                 pieces,
             }
         })
     }
+    #[inline(always)]
     pub fn insert(&self, new: BitMap64, total: BitMap64, i: usize) -> Self {
-        let mut pieces = self.pieces;
+        let mut pieces = self.pieces.clone();
         pieces[i + 1] = new;
         Self { total, pieces }
     }
     pub fn new(first: BitMap64) -> Self {
         Self {
-            total: first,
+            total: first.clone(),
             pieces: [
                 first,
                 BitMap64::new(0),

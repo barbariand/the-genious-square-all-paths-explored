@@ -1,9 +1,10 @@
 use super::dices::Dices;
 use crate::pieceboard::PieceBoard;
 use crate::BitMap64;
+use rayon::iter::IntoParallelIterator;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Board {
     starter_board: BitMap64,
 }
@@ -33,17 +34,17 @@ impl Board {
             .expect("it should allways have 9 vecs in the thingy");
         //make them to pieceboards holadin all pieces
         let candidates: Vec<_> = pre_candidates
-            .par_iter()
-            .map(|v| PieceBoard::new(**v))
+            .into_par_iter()
+            .map(|v| PieceBoard::new(v.clone()))
             .collect();
         possible
-            .iter()
+            .into_iter()
             .rev()
             .enumerate()
             .fold(candidates, |acc, (i, piece_positions)| {
                 piece_positions
-                    .par_iter()
-                    .flat_map_iter(|v: &&BitMap64| {
+                    .into_par_iter()
+                    .flat_map_iter(|v: &BitMap64| {
                         let compare = u64x64::splat(v.get_copied_inner());
                         let iter = acc.array_chunks();
 
@@ -58,7 +59,8 @@ impl Board {
                             let ored = (arr | compare).to_array();
                             anded.into_iter().zip(ored.into_iter()).zip(val).filter_map(
                                 move |((comp, new), val)| {
-                                    (comp == 0).then(|| val.insert(**v, BitMap64::new(new), i))
+                                    (comp == 0)
+                                        .then(|| val.insert(v.clone(), BitMap64::new(new), i))
                                 },
                             )
                         })
@@ -82,7 +84,7 @@ mod tests {
             Board::new(get_dices()).solve();
         })
     }
-    #[bench]
+    /* #[bench]
     fn finding_solution_to_bigest_board(b: &mut Bencher) {
         use crate::dices::{
             Column::{Five, Four, One, Six, Tree, Two},
@@ -101,5 +103,5 @@ mod tests {
             ]))
             .solve();
         })
-    }
+    } */
 }
