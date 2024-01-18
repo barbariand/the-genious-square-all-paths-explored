@@ -1,5 +1,8 @@
+use std::rc::Rc;
+use std::sync::Arc;
+
 use super::dices::Dices;
-use crate::pieceboard::PieceBoard;
+use crate::pieceboard::{Nodes, PieceBoardNode, StartNode, TryInsertNode};
 use crate::BitMap64;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::IntoParallelRefIterator;
@@ -24,16 +27,18 @@ impl Board {
         }
         Self { starter_board }
     }
-    pub fn solve(self) -> Vec<PieceBoard> {
+    pub fn solve(self) -> Vec<Arc<Nodes>> {
         use std::simd::*;
         // we get the possible pieces here that are not in the starterboard
-        let (possible, pre_candidates) = crate::pieces::get_possible(self.starter_board);
-
+        let (possible, pre_candidates) = crate::pieces::get_possible(self.starter_board.clone());
+        let rc = Arc::new(Nodes::StartNode(StartNode(self.starter_board)));
+        let r = &rc;
         //make them to pieceboards holadin all pieces
-        let candidates: Vec<_> = pre_candidates
+        let candidates: Vec<Arc<Nodes>> = pre_candidates
             .into_par_iter()
-            .map(|v| PieceBoard::new(v.clone()))
+            .map(|v| r.insert_as_total(v.clone()))
             .collect();
+
         possible
             .into_iter()
             .rev()
@@ -46,10 +51,10 @@ impl Board {
                         let iter = acc.array_chunks();
 
                         let rem = iter.remainder();
-                        iter.flat_map(move |val: &[PieceBoard; 64]| {
+                        iter.flat_map(move |val: &[Arc<Nodes>; 64]| {
                             let vec = val
                                 .iter()
-                                .map(|v| v.total.get_copied_inner())
+                                .map(|v| v.total().get_copied_inner())
                                 .collect::<Vec<_>>();
                             let arr = u64x64::from_slice(&(*vec));
                             let anded = (arr & compare);
@@ -60,11 +65,10 @@ impl Board {
                                 .zip(ored.to_array().into_iter())
                                 .zip(val)
                                 .filter_map(move |((comp, new), val)| {
-                                    (comp == 0)
-                                        .then(|| val.insert(v.clone(), BitMap64::new(new), i))
+                                    (comp == 0).then(|| val.insert(v.clone(), BitMap64::new(new)))
                                 })
                         })
-                        .chain(rem.iter().filter_map(|val| val.try_insert(v, i)))
+                        .chain(rem.iter().filter_map(|val| val.try_insert(v.clone())))
                     })
                     .collect()
             })

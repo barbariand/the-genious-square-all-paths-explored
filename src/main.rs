@@ -16,6 +16,9 @@ mod pieceboard;
 mod pieces;
 use bitmap::BitMap64;
 use board::Board;
+use itertools::Itertools;
+
+use crate::pieceboard::Nodes;
 
 // removes the ones where the start is on any even square visulised bellow with plusses and minus
 /*
@@ -72,9 +75,9 @@ fn main() {
         starter_board,
         solutions
             .first()
-            .map_or_else(|| "None".to_owned(), ToString::to_string)
+            .map_or_else(|| "None".to_owned(), |v| format!("{}", v))
     );
 
     println!("amount of solutions found: {}", solutions.len());
-    std::fs::write("./solutions", format!("{solutions:?}")).expect("cant write to file");
+    std::fs::write("./solutions", format!("{:?}", solutions)).expect("cant write to file");
 }
