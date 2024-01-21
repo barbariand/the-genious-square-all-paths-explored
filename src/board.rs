@@ -4,6 +4,7 @@ use crate::BitMap64;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use rayon::prelude::ParallelBridge;
 #[derive(Debug, Clone)]
 pub struct Board {
     starter_board: BitMap64,
@@ -41,30 +42,32 @@ impl Board {
             .fold(candidates, |acc, (i, piece_positions)| {
                 piece_positions
                     .into_par_iter()
-                    .flat_map_iter(|v: &BitMap64| {
+                    .flat_map(|v: &BitMap64| {
                         let compare = u64x64::splat(v.get_copied_inner());
                         let iter = acc.array_chunks();
 
                         let rem = iter.remainder();
-                        iter.flat_map(move |val: &[PieceBoard; 64]| {
-                            let vec = val
-                                .iter()
-                                .map(|v| v.total.get_copied_inner())
-                                .collect::<Vec<_>>();
-                            let arr = u64x64::from_slice(&(*vec));
-                            let anded = (arr & compare);
-                            let ored = (arr | compare);
-                            anded
-                                .to_array()
-                                .into_iter()
-                                .zip(ored.to_array().into_iter())
-                                .zip(val)
-                                .filter_map(move |((comp, new), val)| {
-                                    (comp == 0)
-                                        .then(|| val.insert(v.clone(), BitMap64::new(new), i))
-                                })
-                        })
-                        .chain(rem.iter().filter_map(|val| val.try_insert(v, i)))
+                        iter.into_iter()
+                            .par_bridge()
+                            .flat_map_iter(move |val: &[PieceBoard; 64]| {
+                                let vec = val
+                                    .iter()
+                                    .map(|v| v.total.get_copied_inner())
+                                    .collect::<Vec<_>>();
+                                let arr = u64x64::from_slice(&(*vec));
+                                let anded = arr & compare;
+                                let ored = arr | compare;
+                                anded
+                                    .to_array()
+                                    .into_iter()
+                                    .zip(ored.to_array().into_iter())
+                                    .zip(val)
+                                    .filter_map(move |((comp, new), val)| {
+                                        (comp == 0)
+                                            .then(|| val.insert(v.clone(), BitMap64::new(new), i))
+                                    })
+                            })
+                            .chain(rem.par_iter().filter_map(|val| val.try_insert(v, i)))
                     })
                     .collect()
             })
