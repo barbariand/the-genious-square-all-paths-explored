@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_imports)]
 mod board_iterator;
 mod dice_combinations;
 pub use board_iterator::BoardIterator;

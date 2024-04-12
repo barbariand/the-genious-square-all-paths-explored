@@ -7,18 +7,21 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
-env_logger = "0.10.1"
+env_logger = "0.11.3"
 futures = "0.3.30"
-image = "0.24"
+image = "0.25.1"
 pollster = "0.3.0"
-wgpu = { version = "0.18.0", features = ["spirv", "vulkan-portability"] }
+wgpu = { version = "0.19.3", features = ["spirv", "vulkan-portability"] }
 structopt = "0.3"
-strum = { version = "0.23.0", default_features = false, features = [
+strum = { version = "0.26.2", default_features = false, features = [
     "std",
     "derive",
 ] }
 spirv-builder = "0.9.0"
-winit = { version = "0.29.0", features = ["android-native-activity", "rwh_05"] }
+winit = { version = "0.29.15", features = [
+    "android-native-activity",
+    "rwh_05",
+] }
 cfg-if = "1.0.0"
 spirv-std = "0.9.0"
 bytemuck = { version = "1.9", features = ["derive"] }

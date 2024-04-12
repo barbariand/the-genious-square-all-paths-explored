@@ -1,5 +1,3 @@
-use core::num;
-
 fn main() {
     let text = include_str!("../log2.txt");
     let number = text

@@ -7,6 +7,7 @@
 #![feature(array_chunks)]
 #![feature(iter_array_chunks)]
 mod args;
+mod bevy;
 mod bitmap;
 mod board;
 mod dices;
@@ -77,4 +78,5 @@ fn main() {
 
     println!("amount of solutions found: {}", solutions.len());
     std::fs::write("./solutions", format!("{solutions:?}")).expect("cant write to file");
+    bevy::main(solutions)
 }

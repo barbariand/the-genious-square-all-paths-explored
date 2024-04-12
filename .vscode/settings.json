@@ -1,5 +1,7 @@
 {
-    "rust-analyzer.linkedProjects": [
-        ".\\Cargo.toml"
-    ]
+  "rust-analyzer.linkedProjects": [".\\Cargo.toml"],
+  "cSpell.words": [
+    "bitboard",
+    "bitboards"
+  ]
 }

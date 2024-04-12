@@ -38,11 +38,10 @@ impl<'a> Iterator for DiceCombinationIterator<'a> {
             if self.indices[i] < self.vecs[i].len() - 1 {
                 self.indices[i] += 1;
                 break;
-            } else {
-                self.indices[i] = 0;
-                if i == 0 {
-                    self.done = true;
-                }
+            }
+            self.indices[i] = 0;
+            if i == 0 {
+                self.done = true;
             }
         }
 

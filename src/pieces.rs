@@ -1,45 +1,70 @@
-use crate::bitmap;
 use crate::bitmap::BitMap64;
 use crate::generated_bitboards::*;
-use rayon::iter::IntoParallelRefIterator;
-use rayon::iter::ParallelIterator;
+use crate::{bitmap, generated_bitboards};
+
 /// gets all possible given the starter bitmap by using the generated code
 #[inline]
-pub fn get_possible(bitmap: BitMap64) -> ([Vec<&'static BitMap64>; 8], Vec<&'static BitMap64>) {
+pub fn get_possible(
+    bitmap: BitMap64,
+) -> ([(usize, Vec<&'static BitMap64>); 8], Vec<&'static BitMap64>) {
     (
         [
-            ONEBYONE
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
-            ONEBYTWO
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
-            ONEBYTHREE
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
-            TWOBYTWO
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
-            SHAPE6
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
-            SHAPE7
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
-            SHAPE8
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
-            SHAPE9
-                .iter()
-                .filter(|v| (*v & &bitmap) == bitmap::ZERO)
-                .collect(),
+            (
+                0,
+                SHAPE9
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
+            (
+                1,
+                SHAPE8
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
+            (
+                2,
+                SHAPE7
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
+            (
+                3,
+                SHAPE6
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
+            (
+                4,
+                TWOBYTWO
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
+            (
+                5,
+                ONEBYTHREE
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
+            (
+                6,
+                ONEBYTWO
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
+            (
+                7,
+                ONEBYONE
+                    .iter()
+                    .filter(|v| (*v & &bitmap) == bitmap::ZERO)
+                    .collect(),
+            ),
         ],
         ONEBYFOUR
             .iter()
@@ -49,7 +74,6 @@ pub fn get_possible(bitmap: BitMap64) -> ([Vec<&'static BitMap64>; 8], Vec<&'sta
 }
 #[cfg(test)]
 mod test {
-    use std::hint::black_box;
 
     use crate::{
         bitmap::{self, BitMap64},
@@ -100,7 +124,7 @@ mod test {
             SHAPE9.as_ref(),
             ONEBYFOUR.as_ref(),
         ]
-        .into_iter()
+        .into_par_iter()
         .map(|arr| {
             arr.into_iter()
                 .filter(|v| (*v & &bitmap) == bitmap::ZERO)
@@ -152,7 +176,7 @@ mod test {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Pieces {
     OneByOne,
     OneByTwo,

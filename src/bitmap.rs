@@ -7,7 +7,7 @@ use core::{
 };
 use std::ops::Deref;
 #[derive(Clone, PartialEq, Eq, Default)]
-pub struct BitMap64(u64);
+pub struct BitMap64(pub u64);
 pub static ZERO: BitMap64 = BitMap64(0);
 impl Deref for BitMap64 {
     type Target = u64;

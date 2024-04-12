@@ -38,6 +38,9 @@ impl PieceBoard {
             ],
         }
     }
+    pub fn pieces(&self) -> &[BitMap64; 9] {
+        &self.pieces
+    }
 }
 impl Debug for PieceBoard {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
