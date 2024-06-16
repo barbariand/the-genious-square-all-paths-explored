@@ -12,6 +12,7 @@ impl Plugin for PieceBoardPlugin {
 struct PieceBoardEnum {
     vec: [[Option<Pieces>; 6]; 6],
 }
+
 /* impl From<PieceBoard> for PieceBoardEnum {
     fn from(v: PieceBoard) -> Self {
         let b = v.pieces;

@@ -1,8 +1,3 @@
-workspace = { members = [
-    "cpu_crate",
-    "finding_the_one_with_the_lowest",
-    "gpu-crate",
-] }
 [package]
 name = "the-genious-square-all-paths-explored"
 version = "0.1.0"
@@ -18,6 +13,8 @@ indicatif = { version = "0.17.7", features = ["rayon"] }
 itertools = "0.12.0"
 rand = "0.8.5"
 rayon = "1.8.0"
+no-panic = "0.1"
+
 
 [build-dependencies]
 proc-macro2 = "1.0.71"
@@ -25,5 +22,5 @@ quote = "*"
 syn = "*"
 
 [profile.release]
-lto = true
+lto = "fat"
 codegen-units = 1
