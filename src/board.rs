@@ -1,3 +1,5 @@
+use std::iter::ArrayChunks;
+
 use super::dices::Dices;
 use crate::pieceboard::PieceBoard;
 use crate::BitMap64;
@@ -44,12 +46,11 @@ impl Board {
                     .into_par_iter()
                     .flat_map(|v: &BitMap64| {
                         let compare = u64x64::splat(v.get_copied_inner());
-                        let iter = acc.array_chunks();
+                        let iter = acc.iter().array_chunks::<8>();
 
-                        let rem = iter.remainder();
                         iter.into_iter()
                             .par_bridge()
-                            .flat_map_iter(move |val: &[PieceBoard; 64]| {
+                            .flat_map_iter(move |val: [&PieceBoard; 8]| {
                                 let vec = val
                                     .iter()
                                     .map(|v| v.total.get_copied_inner())
@@ -67,7 +68,10 @@ impl Board {
                                             .then(|| val.insert(v.clone(), BitMap64::new(new), i))
                                     })
                             })
-                            .chain(rem.par_iter().filter_map(|val| val.try_insert(v, i)))
+                            .chain(
+                                iter.into_remainder()
+                                    .map(|e| e.par_bridge().filter_map(|val| val.try_insert(v, i))).unwrap_or_default(),
+                            )
                     })
                     .collect()
             })

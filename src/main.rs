@@ -3,8 +3,6 @@
 #![feature(test)]
 #![feature(iter_map_windows)]
 #![feature(portable_simd)]
-#![feature(slice_as_chunks)]
-#![feature(array_chunks)]
 #![feature(iter_array_chunks)]
 mod args;
 mod bitmap;
